@@ -1,36 +1,10 @@
-# Environment
-.env
-.env.*
-!.env.example
-
-# Java / Maven
-target/
-*.class
-
 # Python
+.venv/
 __pycache__/
 *.py[cod]
-.venv/
-venv/
 .pytest_cache/
+.coverage
 
-# Node
-node_modules/
-dist/
-build/
-
-# IDE
+# IntelliJ IDEA
 .idea/
-.vscode/
 *.iml
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Temporary
-tmp/
-temp/
