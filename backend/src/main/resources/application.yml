@@ -2,6 +2,16 @@ spring:
   application:
     name: paypilot-backend
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/paypilot
+    username: paypilot
+    password: paypilot_dev
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
 server:
   port: 8080
 
