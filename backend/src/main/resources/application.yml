@@ -3,7 +3,7 @@ spring:
     name: paypilot-backend
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/paypilot
+    url: jdbc:postgresql://localhost:5433/paypilot
     username: paypilot
     password: paypilot_dev
 
