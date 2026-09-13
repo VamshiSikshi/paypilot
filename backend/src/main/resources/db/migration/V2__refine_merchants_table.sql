@@ -1,0 +1,19 @@
+ALTER TABLE merchants
+    DROP COLUMN email;
+
+ALTER TABLE merchants
+    ADD COLUMN country VARCHAR(2) NOT NULL DEFAULT 'IN',
+    ADD COLUMN default_currency VARCHAR(3) NOT NULL DEFAULT 'INR',
+    ADD COLUMN timezone VARCHAR(50) NOT NULL DEFAULT 'Asia/Kolkata',
+    ADD COLUMN status VARCHAR(30) NOT NULL DEFAULT 'ACTIVE',
+    ADD COLUMN last_synced_at TIMESTAMPTZ;
+
+ALTER TABLE merchants
+    ADD CONSTRAINT chk_merchants_status
+    CHECK (status IN ('ACTIVE', 'SUSPENDED', 'DISCONNECTED'));
+
+ALTER TABLE merchants
+    ALTER COLUMN country DROP DEFAULT,
+    ALTER COLUMN default_currency DROP DEFAULT,
+    ALTER COLUMN timezone DROP DEFAULT,
+    ALTER COLUMN status DROP DEFAULT;
