@@ -49,4 +49,64 @@ class UserRepositoryTest {
         assertThat(result.get().getRole()).isEqualTo(UserRole.OWNER);
         assertThat(result.get().getStatus()).isEqualTo(UserStatus.INVITED);
     }
+
+    @Test
+    void shouldFindUserByMerchantIdAndId() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "acc_test_456",
+                        "Test Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        User user = userRepository.save(
+                new User(
+                        merchant,
+                        "finance@test.com",
+                        "Test Finance",
+                        UserRole.FINANCE
+                )
+        );
+
+        var result = userRepository.findByMerchantIdAndId(
+                merchant.getId(),
+                user.getId()
+        );
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(user.getId());
+        assertThat(result.get().getEmail()).isEqualTo("finance@test.com");
+    }
+
+    @Test
+    void shouldNotFindUserWhenMerchantIdDoesNotMatch() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "acc_test_789",
+                        "Test Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        User user = userRepository.save(
+                new User(
+                        merchant,
+                        "viewer@test.com",
+                        "Test Viewer",
+                        UserRole.VIEWER
+                )
+        );
+
+        var result = userRepository.findByMerchantIdAndId(
+                merchant.getId() + 999,
+                user.getId()
+        );
+
+        assertThat(result).isEmpty();
+    }
 }

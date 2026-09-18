@@ -105,4 +105,20 @@ public class User {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+    public void updateDetails(String email, String displayName) {
+        this.email = email;
+        this.displayName = displayName;
+        this.updatedAt = Instant.now();
+    }
+
+    public void updateRole(UserRole role) {
+        this.role = role;
+        this.updatedAt = Instant.now();
+    }
+
+    public void updateStatus(UserStatus status) {
+        this.status = status;
+        this.updatedAt = Instant.now();
+    }
 }
