@@ -108,4 +108,10 @@ public class Merchant {
     public Instant getUpdatedAt() {
         return updatedAt;
     }
+
+
+    public void updateStatus(MerchantStatus status) {
+        this.status = status;
+        this.updatedAt = Instant.now();
+    }
 }
