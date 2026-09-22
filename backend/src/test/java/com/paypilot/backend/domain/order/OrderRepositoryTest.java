@@ -60,4 +60,44 @@ class OrderRepositoryTest {
                 .isEqualByComparingTo("1500.00");
         assertThat(result.get().getAttempts()).isZero();
     }
+
+    @Test
+    void shouldNotFindOrderWhenMerchantIdDoesNotMatch() {
+        Merchant firstMerchant = merchantRepository.save(
+                new Merchant(
+                        "acc_order_first",
+                        "First Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Merchant secondMerchant = merchantRepository.save(
+                new Merchant(
+                        "acc_order_second",
+                        "Second Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        orderRepository.save(
+                new Order(
+                        firstMerchant,
+                        "order_shared_test_123",
+                        new BigDecimal("1500.00"),
+                        "INR",
+                        "receipt_123"
+                )
+        );
+
+        var result = orderRepository.findByMerchantIdAndRazorpayOrderId(
+                secondMerchant.getId(),
+                "order_shared_test_123"
+        );
+
+        assertThat(result).isEmpty();
+    }
 }
