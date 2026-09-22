@@ -10,4 +10,9 @@ public interface WebhookRepository extends JpaRepository<Webhook, Long> {
             Long merchantId,
             String eventId
     );
+
+    Optional<Webhook> findByMerchantIdAndId(
+            Long merchantId,
+            Long webhookId
+    );
 }

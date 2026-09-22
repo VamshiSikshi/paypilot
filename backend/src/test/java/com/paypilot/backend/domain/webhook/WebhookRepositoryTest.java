@@ -68,4 +68,78 @@ class WebhookRepositoryTest {
         assertThat(result.get().getUpdatedAt())
                 .isNotNull();
     }
+
+    @Test
+    void shouldFindWebhookByMerchantIdAndId() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "acc_test_456",
+                        "Test Business 2",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Webhook webhook = webhookRepository.save(
+                new Webhook(
+                        merchant,
+                        "evt_test_456",
+                        "payment.failed",
+                        "{\"id\":\"pay_test_456\"}",
+                        "signature_test_456"
+                )
+        );
+
+        var result = webhookRepository.findByMerchantIdAndId(
+                merchant.getId(),
+                webhook.getId()
+        );
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId())
+                .isEqualTo(webhook.getId());
+        assertThat(result.get().getMerchant().getId())
+                .isEqualTo(merchant.getId());
+    }
+
+    @Test
+    void shouldNotFindWebhookForAnotherMerchant() {
+        Merchant merchant1 = merchantRepository.save(
+                new Merchant(
+                        "acc_test_789",
+                        "Test Business 3",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Merchant merchant2 = merchantRepository.save(
+                new Merchant(
+                        "acc_test_999",
+                        "Test Business 4",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Webhook webhook = webhookRepository.save(
+                new Webhook(
+                        merchant1,
+                        "evt_test_789",
+                        "payment.captured",
+                        "{\"id\":\"pay_test_789\"}",
+                        "signature_test_789"
+                )
+        );
+
+        var result = webhookRepository.findByMerchantIdAndId(
+                merchant2.getId(),
+                webhook.getId()
+        );
+
+        assertThat(result).isEmpty();
+    }
 }
