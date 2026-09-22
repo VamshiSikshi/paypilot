@@ -10,4 +10,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
             Long merchantId,
             String razorpayPaymentId
     );
+
+    Optional<Payment> findByMerchantIdAndId(
+            Long merchantId,
+            Long paymentId
+    );
 }

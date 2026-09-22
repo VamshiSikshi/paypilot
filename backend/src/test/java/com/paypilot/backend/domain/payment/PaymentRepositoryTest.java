@@ -64,4 +64,36 @@ class PaymentRepositoryTest {
         assertThat(result.get().getCaptured())
                 .isFalse();
     }
+
+    @Test
+    void shouldFindPaymentByMerchantIdAndId() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "acc_payment_lookup",
+                        "Payment Lookup Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Payment payment = paymentRepository.save(
+                new Payment(
+                        merchant,
+                        "pay_lookup_123",
+                        "order_lookup_123",
+                        new BigDecimal("1500.00"),
+                        "INR",
+                        "card"
+                )
+        );
+
+        var result = paymentRepository.findByMerchantIdAndId(
+                merchant.getId(),
+                payment.getId()
+        );
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(payment.getId());
+    }
 }
