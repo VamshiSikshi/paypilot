@@ -12,5 +12,9 @@ public interface UserAuthAccountRepository
             String providerUserId
     );
 
+    Optional<UserAuthAccount> findByUserMerchantIdAndUserEmail(
+            Long merchantId,
+            String email
+    );
 }
 
