@@ -64,4 +64,75 @@ class SettlementRepositoryTest {
         assertThat(result.get().getTax())
                 .isEqualByComparingTo("0.00");
     }
+
+    @Test
+    void shouldFindSettlementByMerchantIdAndId() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "acc_test_456",
+                        "Test Business 2",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Settlement settlement = settlementRepository.save(
+                new Settlement(
+                        merchant,
+                        "setl_test_456",
+                        new BigDecimal("15000.00"),
+                        "INR"
+                )
+        );
+
+        var result = settlementRepository.findByMerchantIdAndId(
+                merchant.getId(),
+                settlement.getId()
+        );
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(settlement.getId());
+        assertThat(result.get().getMerchant().getId())
+                .isEqualTo(merchant.getId());
+    }
+
+    @Test
+    void shouldNotFindSettlementForAnotherMerchant() {
+        Merchant merchant1 = merchantRepository.save(
+                new Merchant(
+                        "acc_test_789",
+                        "Test Business 3",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Merchant merchant2 = merchantRepository.save(
+                new Merchant(
+                        "acc_test_999",
+                        "Test Business 4",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Settlement settlement = settlementRepository.save(
+                new Settlement(
+                        merchant1,
+                        "setl_test_789",
+                        new BigDecimal("10000.00"),
+                        "INR"
+                )
+        );
+
+        var result = settlementRepository.findByMerchantIdAndId(
+                merchant2.getId(),
+                settlement.getId()
+        );
+
+        assertThat(result).isEmpty();
+    }
 }

@@ -10,4 +10,9 @@ public interface SettlementRepository extends JpaRepository<Settlement, Long> {
             Long merchantId,
             String razorpaySettlementId
     );
+
+    Optional<Settlement> findByMerchantIdAndId(
+            Long merchantId,
+            Long settlementId
+    );
 }
