@@ -10,4 +10,9 @@ public interface RefundRepository extends JpaRepository<Refund, Long> {
             Long merchantId,
             String razorpayRefundId
     );
+
+    Optional<Refund> findByMerchantIdAndId(
+            Long merchantId,
+            Long refundId
+    );
 }

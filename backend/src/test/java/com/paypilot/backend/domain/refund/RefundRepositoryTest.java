@@ -78,4 +78,99 @@ class RefundRepositoryTest {
         assertThat(result.get().getStatus())
                 .isEqualTo(RefundStatus.CREATED);
     }
+
+    @Test
+    void shouldFindRefundByMerchantIdAndId() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "acc_refund_lookup",
+                        "Refund Lookup Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Payment payment = paymentRepository.save(
+                new Payment(
+                        merchant,
+                        "pay_refund_lookup",
+                        "order_refund_lookup",
+                        new BigDecimal("1500.00"),
+                        "INR",
+                        "card"
+                )
+        );
+
+        Refund refund = refundRepository.save(
+                new Refund(
+                        merchant,
+                        payment,
+                        "rfnd_lookup_123",
+                        "pay_refund_lookup",
+                        new BigDecimal("500.00"),
+                        "INR"
+                )
+        );
+
+        var result = refundRepository.findByMerchantIdAndId(
+                merchant.getId(),
+                refund.getId()
+        );
+
+        assertThat(result).isPresent();
+        assertThat(result.get().getId()).isEqualTo(refund.getId());
+    }
+
+    @Test
+    void shouldNotFindRefundWhenMerchantIdDoesNotMatch() {
+        Merchant firstMerchant = merchantRepository.save(
+                new Merchant(
+                        "acc_refund_first",
+                        "First Refund Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Merchant secondMerchant = merchantRepository.save(
+                new Merchant(
+                        "acc_refund_second",
+                        "Second Refund Business",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        Payment payment = paymentRepository.save(
+                new Payment(
+                        firstMerchant,
+                        "pay_refund_shared",
+                        "order_refund_shared",
+                        new BigDecimal("1500.00"),
+                        "INR",
+                        "card"
+                )
+        );
+
+        Refund refund = refundRepository.save(
+                new Refund(
+                        firstMerchant,
+                        payment,
+                        "rfnd_shared_123",
+                        "pay_refund_shared",
+                        new BigDecimal("500.00"),
+                        "INR"
+                )
+        );
+
+        var result = refundRepository.findByMerchantIdAndId(
+                secondMerchant.getId(),
+                refund.getId()
+        );
+
+        assertThat(result).isEmpty();
+    }
 }
