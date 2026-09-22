@@ -10,4 +10,5 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             Long merchantId,
             String razorpayOrderId
     );
+    Optional<Order> findByMerchantIdAndId(Long merchantId, Long orderId);
 }
