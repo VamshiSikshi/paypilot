@@ -2,6 +2,8 @@ package com.paypilot.backend.domain.ai;
 
 import com.paypilot.backend.domain.merchant.Merchant;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -17,14 +19,14 @@ public class AIInsight {
     @JoinColumn(name = "merchant_id", nullable = false)
     private Merchant merchant;
 
-    @Column(name = "insight_type", nullable = false, length = 100)
+    @Column(name = "insight_type", nullable = false, length = 50)
     private String insightType;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private InsightSeverity severity;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, length = 200)
     private String title;
 
     @Column(nullable = false, length = 2000)
@@ -38,7 +40,7 @@ public class AIInsight {
     @Column(nullable = false, length = 20)
     private InsightSource source;
 
-    @Column
+    @JdbcTypeCode(SqlTypes.JSON)
     private String data;
 
     @Column(name = "valid_from", nullable = false)
