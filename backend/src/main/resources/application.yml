@@ -24,3 +24,6 @@ management:
 paypilot:
   ai-service:
     base-url: http://localhost:8000
+
+  google:
+    client-id: test-google-client-id

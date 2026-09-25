@@ -8,13 +8,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import com.paypilot.backend.security.JwtAuthenticationFilter;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
 @WebMvcTest(AiController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class AiControllerTest {
 
     @Autowired
@@ -22,6 +25,9 @@ class AiControllerTest {
 
     @MockitoBean
     private AiIntegrationService aiIntegrationService;
+
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
     void shouldReturnAiHealth() throws Exception {

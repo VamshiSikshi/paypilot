@@ -12,15 +12,20 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import com.paypilot.backend.security.JwtAuthenticationFilter;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 
 @WebMvcTest(HealthController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class HealthControllerTest {
-
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
     private HealthService healthService;
+
+    @MockitoBean
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Test
     void shouldReturnHealthStatus() throws Exception {

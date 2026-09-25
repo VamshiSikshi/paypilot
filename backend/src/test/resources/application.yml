@@ -13,3 +13,9 @@ spring:
 paypilot:
   ai-service:
     base-url: http://localhost:8000
+
+  security:
+    jwt:
+      secret: test-secret-key-for-paypilot-jwt-testing-only-256-bits
+      expiration: 86400000
+      issuer: paypilot

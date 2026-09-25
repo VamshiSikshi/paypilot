@@ -16,5 +16,16 @@ public interface UserAuthAccountRepository
             Long merchantId,
             String email
     );
+
+    Optional<UserAuthAccount> findByUserMerchantRazorpayAccountIdAndUserEmail(
+            String razorpayAccountId,
+            String email
+    );
+
+    Optional<UserAuthAccount> findByUserMerchantRazorpayAccountIdAndProviderAndProviderUserId(
+            String razorpayAccountId,
+            AuthProvider provider,
+            String providerUserId
+    );
 }
 
