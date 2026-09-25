@@ -11,4 +11,9 @@ public interface AIToolExecutionRepository
             Long merchantId,
             String toolCallId
     );
+
+    Optional<AIToolExecution> findByMerchantIdAndId(
+            Long merchantId,
+            Long id
+    );
 }

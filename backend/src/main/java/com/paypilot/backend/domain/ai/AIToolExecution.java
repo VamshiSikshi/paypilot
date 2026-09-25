@@ -2,6 +2,8 @@ package com.paypilot.backend.domain.ai;
 
 import com.paypilot.backend.domain.merchant.Merchant;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -17,31 +19,31 @@ public class AIToolExecution {
     @JoinColumn(name = "merchant_id", nullable = false)
     private Merchant merchant;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "conversation_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "conversation_id", nullable = false)
     private AIConversation conversation;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "message_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "message_id", nullable = false)
     private AIMessage message;
 
-    @Column(name = "tool_name", nullable = false, length = 100)
+    @Column(name = "tool_name", nullable = false, length = 150)
     private String toolName;
 
-    @Column(name = "tool_call_id", nullable = false, unique = true, length = 100)
+    @Column(name = "tool_call_id",unique = true, length = 150)
     private String toolCallId;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private AIToolExecutionStatus status;
 
-    @Column
+    @JdbcTypeCode(SqlTypes.JSON)
     private String input;
 
-    @Column
+    @JdbcTypeCode(SqlTypes.JSON)
     private String output;
 
-    @Column(name = "error_message", length = 1000)
+    @Column(name = "error_message", columnDefinition = "TEXT")
     private String errorMessage;
 
     @Column(name = "started_at")
@@ -132,5 +134,36 @@ public class AIToolExecution {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public void start() {
+        this.status = AIToolExecutionStatus.RUNNING;
+        this.startedAt = Instant.now();
+    }
+
+    public void complete(String output) {
+        Instant completedAt = Instant.now();
+
+        this.status = AIToolExecutionStatus.COMPLETED;
+        this.output = output;
+        this.completedAt = completedAt;
+
+        if (startedAt != null) {
+            this.durationMs =
+                    completedAt.toEpochMilli() - startedAt.toEpochMilli();
+        }
+    }
+
+    public void fail(String errorMessage) {
+        Instant completedAt = Instant.now();
+
+        this.status = AIToolExecutionStatus.FAILED;
+        this.errorMessage = errorMessage;
+        this.completedAt = completedAt;
+
+        if (startedAt != null) {
+            this.durationMs =
+                    completedAt.toEpochMilli() - startedAt.toEpochMilli();
+        }
     }
 }
