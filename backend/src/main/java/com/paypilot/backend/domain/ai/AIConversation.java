@@ -87,4 +87,9 @@ public class AIConversation {
     public Instant getLastMessageAt() {
         return lastMessageAt;
     }
+
+    public void archive() {
+        this.status = AIConversationStatus.ARCHIVED;
+        this.updatedAt = Instant.now();
+    }
 }
