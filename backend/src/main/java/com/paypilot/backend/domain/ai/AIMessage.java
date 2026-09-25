@@ -2,6 +2,8 @@ package com.paypilot.backend.domain.ai;
 
 import com.paypilot.backend.domain.merchant.Merchant;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -32,7 +34,7 @@ public class AIMessage {
     @Column(name = "message_type", nullable = false, length = 30)
     private AIMessageType messageType;
 
-    @Column
+    @JdbcTypeCode(SqlTypes.JSON)
     private String metadata;
 
     @Column(name = "created_at", nullable = false, updatable = false)

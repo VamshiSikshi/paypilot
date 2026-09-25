@@ -22,7 +22,7 @@ public class AIConversation {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(length = 255)
+    @Column(length = 200)
     private String title;
 
     @Enumerated(EnumType.STRING)
