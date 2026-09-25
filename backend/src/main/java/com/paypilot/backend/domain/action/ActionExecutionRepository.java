@@ -7,6 +7,11 @@ import java.util.Optional;
 public interface ActionExecutionRepository
         extends JpaRepository<ActionExecution, Long> {
 
+    Optional<ActionExecution> findByMerchantIdAndId(
+            Long merchantId,
+            Long id
+    );
+
     Optional<ActionExecution> findByMerchantIdAndIdempotencyKey(
             Long merchantId,
             String idempotencyKey
