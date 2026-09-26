@@ -13,12 +13,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
-import java.math.BigDecimal;
 import java.time.Instant;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
 @Entity
-@Table(name = "settlement_reconciliation")
+@Table(name = "settlement_reconciliation_entries")
 public class SettlementReconciliation {
 
     @Id
@@ -40,23 +41,23 @@ public class SettlementReconciliation {
     @Column(name = "transaction_type", nullable = false, length = 30)
     private ReconciliationTransactionType transactionType;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal debit;
+    @Column(nullable = false)
+    private Long debit;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal credit;
+    @Column(nullable = false)
+    private Long credit;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal amount;
+    @Column(nullable = false)
+    private Long amount;
 
     @Column(nullable = false, length = 3)
     private String currency;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal fee;
+    @Column(nullable = false)
+    private Long fee;
 
-    @Column(nullable = false, precision = 19, scale = 2)
-    private BigDecimal tax;
+    @Column(nullable = false)
+    private Long tax;
 
     @Column(name = "on_hold", nullable = false)
     private Boolean onHold;
@@ -70,10 +71,10 @@ public class SettlementReconciliation {
     @Column(name = "settled_at")
     private Instant settledAt;
 
-    @Column(length = 500)
+    @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column
+    @JdbcTypeCode(SqlTypes.JSON)
     private String notes;
 
     @Column(name = "razorpay_payment_id", length = 100)
@@ -114,19 +115,19 @@ public class SettlementReconciliation {
             Settlement settlement,
             String razorpayEntityId,
             ReconciliationTransactionType transactionType,
-            BigDecimal amount,
+            Long amount,
             String currency
     ) {
         this.merchant = merchant;
         this.settlement = settlement;
         this.razorpayEntityId = razorpayEntityId;
         this.transactionType = transactionType;
-        this.debit = BigDecimal.ZERO;
-        this.credit = BigDecimal.ZERO;
         this.amount = amount;
+        this.debit = 0L;
+        this.credit = 0L;
+        this.fee = 0L;
+        this.tax = 0L;
         this.currency = currency;
-        this.fee = BigDecimal.ZERO;
-        this.tax = BigDecimal.ZERO;
         this.onHold = false;
         this.settled = false;
 
@@ -139,12 +140,12 @@ public class SettlementReconciliation {
     public Settlement getSettlement() { return settlement; }
     public String getRazorpayEntityId() { return razorpayEntityId; }
     public ReconciliationTransactionType getTransactionType() { return transactionType; }
-    public BigDecimal getDebit() { return debit; }
-    public BigDecimal getCredit() { return credit; }
-    public BigDecimal getAmount() { return amount; }
+    public Long getDebit() { return debit; }
+    public Long getCredit() { return credit; }
+    public Long getAmount() { return amount; }
     public String getCurrency() { return currency; }
-    public BigDecimal getFee() { return fee; }
-    public BigDecimal getTax() { return tax; }
+    public Long getFee() { return fee; }
+    public Long getTax() { return tax; }
     public Boolean getOnHold() { return onHold; }
     public Boolean getSettled() { return settled; }
     public Instant getCreatedAt() { return createdAt; }

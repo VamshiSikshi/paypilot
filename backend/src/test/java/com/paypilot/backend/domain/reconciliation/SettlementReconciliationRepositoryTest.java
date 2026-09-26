@@ -52,7 +52,7 @@ class SettlementReconciliationRepositoryTest {
                                 settlement,
                                 "pay_test_123",
                                 ReconciliationTransactionType.PAYMENT,
-                                new BigDecimal("1500.00"),
+                                150000L,
                                 "INR"
                         )
                 );
@@ -75,15 +75,15 @@ class SettlementReconciliationRepositoryTest {
         assertThat(result.get().getTransactionType())
                 .isEqualTo(ReconciliationTransactionType.PAYMENT);
         assertThat(result.get().getAmount())
-                .isEqualByComparingTo("1500.00");
+                .isEqualTo(150000L);
         assertThat(result.get().getDebit())
-                .isEqualByComparingTo("0.00");
+                .isEqualTo(0L);
         assertThat(result.get().getCredit())
-                .isEqualByComparingTo("0.00");
+                .isEqualTo(0L);
         assertThat(result.get().getFee())
-                .isEqualByComparingTo("0.00");
+                .isEqualTo(0L);
         assertThat(result.get().getTax())
-                .isEqualByComparingTo("0.00");
+                .isEqualTo(0L);
         assertThat(result.get().getOnHold())
                 .isFalse();
         assertThat(result.get().getSettled())
