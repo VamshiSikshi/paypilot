@@ -3,6 +3,8 @@ package com.paypilot.backend.domain.audit;
 import com.paypilot.backend.domain.merchant.Merchant;
 import com.paypilot.backend.domain.user.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.Instant;
 
@@ -25,22 +27,22 @@ public class AuditLog {
     @Column(name = "event_type", nullable = false, length = 100)
     private String eventType;
 
-    @Column(name = "resource_type", length = 100)
+    @Column(name = "resource_type", length = 50)
     private String resourceType;
 
     @Column(name = "resource_id")
     private Long resourceId;
 
-    @Column(nullable = false, length = 1000)
+    @Column(columnDefinition="TEXT")
     private String description;
 
-    @Column
+    @JdbcTypeCode(SqlTypes.JSON)
     private String metadata;
 
     @Column(name = "ip_address", length = 45)
     private String ipAddress;
 
-    @Column(name = "user_agent", length = 500)
+    @Column(name = "user_agent", columnDefinition = "TEXT")
     private String userAgent;
 
     @Column(name = "created_at", nullable = false, updatable = false)
