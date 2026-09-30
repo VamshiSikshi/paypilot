@@ -24,4 +24,9 @@ public interface SettlementReconciliationRepository
             Long merchantId,
             Long settlementId
     );
+
+    Optional<SettlementReconciliation> findByMerchantIdAndId(
+            Long merchantId,
+            Long reconciliationId
+    );
 }

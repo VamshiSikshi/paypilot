@@ -53,8 +53,10 @@ class ReconciliationServiceTest {
                         "INR"
                 );
 
-        when(reconciliationRepository.findById(reconciliationId))
-                .thenReturn(Optional.of(reconciliation));
+        when(reconciliationRepository.findByMerchantIdAndId(
+                merchantId,
+                reconciliationId
+        )).thenReturn(Optional.of(reconciliation));
 
         ReconciliationResponse response =
                 reconciliationService.getReconciliation(
@@ -74,7 +76,11 @@ class ReconciliationServiceTest {
                 .isEqualTo(2500000L);
         assertThat(response.currency()).isEqualTo("INR");
 
-        verify(reconciliationRepository).findById(reconciliationId);
+        verify(reconciliationRepository)
+                .findByMerchantIdAndId(
+                        merchantId,
+                        reconciliationId
+                );
     }
 
     @Test
@@ -82,8 +88,10 @@ class ReconciliationServiceTest {
         Long merchantId = 1L;
         Long reconciliationId = 100L;
 
-        when(reconciliationRepository.findById(reconciliationId))
-                .thenReturn(Optional.empty());
+        when(reconciliationRepository.findByMerchantIdAndId(
+                merchantId,
+                reconciliationId
+        )).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
                 reconciliationService.getReconciliation(
@@ -100,23 +108,10 @@ class ReconciliationServiceTest {
         Long merchantId = 1L;
         Long reconciliationId = 100L;
 
-        Merchant anotherMerchant = mock(Merchant.class);
-        when(anotherMerchant.getId()).thenReturn(2L);
-
-        Settlement settlement = mock(Settlement.class);
-
-        SettlementReconciliation reconciliation =
-                new SettlementReconciliation(
-                        anotherMerchant,
-                        settlement,
-                        "pay_test_123",
-                        ReconciliationTransactionType.PAYMENT,
-                        2500000L,
-                        "INR"
-                );
-
-        when(reconciliationRepository.findById(reconciliationId))
-                .thenReturn(Optional.of(reconciliation));
+        when(reconciliationRepository.findByMerchantIdAndId(
+                merchantId,
+                reconciliationId
+        )).thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
                 reconciliationService.getReconciliation(
@@ -126,7 +121,11 @@ class ReconciliationServiceTest {
         )
                 .isInstanceOf(ResourceNotFoundException.class);
 
-        verify(reconciliationRepository).findById(reconciliationId);
+        verify(reconciliationRepository)
+                .findByMerchantIdAndId(
+                        merchantId,
+                        reconciliationId
+                );
     }
 
     @Test

@@ -25,8 +25,7 @@ public class ReconciliationServiceImpl implements ReconciliationService {
             Long reconciliationId
     ) {
         SettlementReconciliation reconciliation = reconciliationRepository
-                .findById(reconciliationId)
-                .filter(entry -> entry.getMerchant().getId().equals(merchantId))
+                .findByMerchantIdAndId(merchantId, reconciliationId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "Reconciliation not found: " + reconciliationId
