@@ -267,11 +267,12 @@ class ActionExecutionServiceImplTest {
         when(conversationRepository.findByMerchantIdAndId(1L, 10L))
                 .thenReturn(Optional.of(conversation));
         when(messageRepository
-                .findByMerchantIdAndConversationIdOrderByCreatedAtAsc(
+                .findByMerchantIdAndConversationIdAndId(
                         1L,
-                        10L
+                        10L,
+                        20L
                 ))
-                .thenReturn(List.of());
+                .thenReturn(Optional.empty());
 
         assertThatThrownBy(() ->
                 actionExecutionService.createExecution(
@@ -432,5 +433,169 @@ class ActionExecutionServiceImplTest {
         )
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessage("Action execution not found");
+    }
+
+    @Test
+    void shouldConfirmExecution() {
+        ActionExecution execution = new ActionExecution(
+                merchant,
+                user,
+                null,
+                null,
+                ActionType.REFUND,
+                ActionTargetType.PAYMENT,
+                100L,
+                true,
+                "{\"amount\":2500}",
+                "refund-payment-100"
+        );
+
+        when(actionExecutionRepository.findByMerchantIdAndId(1L, 10L))
+                .thenReturn(Optional.of(execution));
+
+        ActionExecutionResponse result =
+                actionExecutionService.confirmExecution(1L, 10L);
+
+        assertThat(result.status())
+                .isEqualTo(ActionExecutionStatus.CONFIRMED);
+        assertThat(result.confirmedAt())
+                .isNotNull();
+
+        verify(actionExecutionRepository)
+                .findByMerchantIdAndId(1L, 10L);
+    }
+
+    @Test
+    void shouldStartExecution() {
+        ActionExecution execution = new ActionExecution(
+                merchant,
+                user,
+                null,
+                null,
+                ActionType.REFUND,
+                ActionTargetType.PAYMENT,
+                100L,
+                false,
+                "{\"amount\":2500}",
+                "refund-payment-100"
+        );
+
+        when(actionExecutionRepository.findByMerchantIdAndId(1L, 10L))
+                .thenReturn(Optional.of(execution));
+
+        ActionExecutionResponse result =
+                actionExecutionService.startExecution(1L, 10L);
+
+        assertThat(result.status())
+                .isEqualTo(ActionExecutionStatus.EXECUTING);
+        assertThat(result.startedAt())
+                .isNotNull();
+
+        verify(actionExecutionRepository)
+                .findByMerchantIdAndId(1L, 10L);
+    }
+
+    @Test
+    void shouldCompleteExecution() {
+        ActionExecution execution = new ActionExecution(
+                merchant,
+                user,
+                null,
+                null,
+                ActionType.REFUND,
+                ActionTargetType.PAYMENT,
+                100L,
+                false,
+                "{\"amount\":2500}",
+                "refund-payment-100"
+        );
+
+        execution.start();
+
+        when(actionExecutionRepository.findByMerchantIdAndId(1L, 10L))
+                .thenReturn(Optional.of(execution));
+
+        ActionExecutionResponse result =
+                actionExecutionService.completeExecution(
+                        1L,
+                        10L,
+                        "{\"success\":true}"
+                );
+
+        assertThat(result.status())
+                .isEqualTo(ActionExecutionStatus.COMPLETED);
+        assertThat(result.resultData())
+                .isEqualTo("{\"success\":true}");
+        assertThat(result.completedAt())
+                .isNotNull();
+
+        verify(actionExecutionRepository)
+                .findByMerchantIdAndId(1L, 10L);
+    }
+
+    @Test
+    void shouldFailExecution() {
+        ActionExecution execution = new ActionExecution(
+                merchant,
+                user,
+                null,
+                null,
+                ActionType.REFUND,
+                ActionTargetType.PAYMENT,
+                100L,
+                false,
+                "{\"amount\":2500}",
+                "refund-payment-100"
+        );
+
+        execution.start();
+
+        when(actionExecutionRepository.findByMerchantIdAndId(1L, 10L))
+                .thenReturn(Optional.of(execution));
+
+        ActionExecutionResponse result =
+                actionExecutionService.failExecution(
+                        1L,
+                        10L,
+                        "Refund failed"
+                );
+
+        assertThat(result.status())
+                .isEqualTo(ActionExecutionStatus.FAILED);
+        assertThat(result.errorMessage())
+                .isEqualTo("Refund failed");
+        assertThat(result.completedAt())
+                .isNotNull();
+
+        verify(actionExecutionRepository)
+                .findByMerchantIdAndId(1L, 10L);
+    }
+
+    @Test
+    void shouldCancelExecution() {
+        ActionExecution execution = new ActionExecution(
+                merchant,
+                user,
+                null,
+                null,
+                ActionType.REFUND,
+                ActionTargetType.PAYMENT,
+                100L,
+                true,
+                "{\"amount\":2500}",
+                "refund-payment-100"
+        );
+
+        when(actionExecutionRepository.findByMerchantIdAndId(1L, 10L))
+                .thenReturn(Optional.of(execution));
+
+        ActionExecutionResponse result =
+                actionExecutionService.cancelExecution(1L, 10L);
+
+        assertThat(result.status())
+                .isEqualTo(ActionExecutionStatus.CANCELLED);
+
+        verify(actionExecutionRepository)
+                .findByMerchantIdAndId(1L, 10L);
     }
 }

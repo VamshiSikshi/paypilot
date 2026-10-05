@@ -78,14 +78,11 @@ public class ActionExecutionServiceImpl
         AIMessage message = null;
         if (messageId != null) {
             message = messageRepository
-                    .findByMerchantIdAndConversationIdOrderByCreatedAtAsc(
+                    .findByMerchantIdAndConversationIdAndId(
                             merchantId,
-                            conversationId
+                            conversationId,
+                            messageId
                     )
-                    .stream()
-                    .filter(candidate ->
-                            candidate.getId().equals(messageId))
-                    .findFirst()
                     .orElseThrow(() ->
                             new ResourceNotFoundException(
                                     "AI message not found"
@@ -156,6 +153,93 @@ public class ActionExecutionServiceImpl
                         new ResourceNotFoundException(
                                 "Action execution not found"
                         ));
+
+        return ActionExecutionResponse.from(execution);
+    }
+
+    @Override
+    public ActionExecutionResponse confirmExecution(
+            Long merchantId,
+            Long executionId
+    ) {
+        ActionExecution execution = actionExecutionRepository
+                .findByMerchantIdAndId(merchantId, executionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Action execution not found"
+                        ));
+
+        execution.confirm();
+
+        return ActionExecutionResponse.from(execution);
+    }
+
+    @Override
+    public ActionExecutionResponse startExecution(
+            Long merchantId,
+            Long executionId
+    ) {
+        ActionExecution execution = actionExecutionRepository
+                .findByMerchantIdAndId(merchantId, executionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Action execution not found"
+                        ));
+
+        execution.start();
+
+        return ActionExecutionResponse.from(execution);
+    }
+
+    @Override
+    public ActionExecutionResponse completeExecution(
+            Long merchantId,
+            Long executionId,
+            String resultData
+    ) {
+        ActionExecution execution = actionExecutionRepository
+                .findByMerchantIdAndId(merchantId, executionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Action execution not found"
+                        ));
+
+        execution.complete(resultData);
+
+        return ActionExecutionResponse.from(execution);
+    }
+
+    @Override
+    public ActionExecutionResponse failExecution(
+            Long merchantId,
+            Long executionId,
+            String errorMessage
+    ) {
+        ActionExecution execution = actionExecutionRepository
+                .findByMerchantIdAndId(merchantId, executionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Action execution not found"
+                        ));
+
+        execution.fail(errorMessage);
+
+        return ActionExecutionResponse.from(execution);
+    }
+
+    @Override
+    public ActionExecutionResponse cancelExecution(
+            Long merchantId,
+            Long executionId
+    ) {
+        ActionExecution execution = actionExecutionRepository
+                .findByMerchantIdAndId(merchantId, executionId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Action execution not found"
+                        ));
+
+        execution.cancel();
 
         return ActionExecutionResponse.from(execution);
     }

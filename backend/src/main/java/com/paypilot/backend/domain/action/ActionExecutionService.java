@@ -26,4 +26,31 @@ public interface ActionExecutionService {
             Long merchantId,
             String idempotencyKey
     );
+
+    ActionExecutionResponse confirmExecution(
+            Long merchantId,
+            Long executionId
+    );
+
+    ActionExecutionResponse startExecution(
+            Long merchantId,
+            Long executionId
+    );
+
+    ActionExecutionResponse completeExecution(
+            Long merchantId,
+            Long executionId,
+            String resultData
+    );
+
+    ActionExecutionResponse failExecution(
+            Long merchantId,
+            Long executionId,
+            String errorMessage
+    );
+
+    ActionExecutionResponse cancelExecution(
+            Long merchantId,
+            Long executionId
+    );
 }

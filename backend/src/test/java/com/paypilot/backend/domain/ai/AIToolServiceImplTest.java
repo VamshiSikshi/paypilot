@@ -35,8 +35,8 @@ class AIToolServiceImplTest {
                 .thenReturn(Optional.of(conversation));
 
         when(messageRepository
-                .findByMerchantIdAndConversationIdOrderByCreatedAtAsc(10L, 100L))
-                .thenReturn(java.util.List.of(message));
+                .findByMerchantIdAndConversationIdAndId(10L, 100L, 200L))
+                .thenReturn(Optional.of(message));
 
         when(message.getId()).thenReturn(200L);
 
@@ -67,9 +67,10 @@ class AIToolServiceImplTest {
         verify(conversationRepository)
                 .findByMerchantIdAndId(10L, 100L);
         verify(messageRepository)
-                .findByMerchantIdAndConversationIdOrderByCreatedAtAsc(
+                .findByMerchantIdAndConversationIdAndId(
                         10L,
-                        100L
+                        100L,
+                        200L
                 );
         verify(toolExecutionRepository)
                 .save(any(AIToolExecution.class));
@@ -187,8 +188,8 @@ class AIToolServiceImplTest {
                 .thenReturn(Optional.of(conversation));
 
         when(messageRepository
-                .findByMerchantIdAndConversationIdOrderByCreatedAtAsc(10L, 100L))
-                .thenReturn(java.util.List.of());
+                .findByMerchantIdAndConversationIdAndId(10L, 100L, 200L))
+                .thenReturn(Optional.empty());
 
         AIToolService service =
                 new AIToolServiceImpl(
@@ -211,9 +212,10 @@ class AIToolServiceImplTest {
         );
 
         verify(messageRepository)
-                .findByMerchantIdAndConversationIdOrderByCreatedAtAsc(
+                .findByMerchantIdAndConversationIdAndId(
                         10L,
-                        100L
+                        100L,
+                        200L
                 );
         verify(toolExecutionRepository, never())
                 .save(any(AIToolExecution.class));

@@ -194,4 +194,68 @@ public class ActionExecution {
     public String getIdempotencyKey() {
         return idempotencyKey;
     }
+
+    public void confirm() {
+        if (status != ActionExecutionStatus.CONFIRMATION_REQUIRED) {
+            throw new IllegalStateException(
+                    "Action execution cannot be confirmed from status: " + status
+            );
+        }
+
+        this.status = ActionExecutionStatus.CONFIRMED;
+        this.confirmedAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void start() {
+        if (status != ActionExecutionStatus.PENDING
+                && status != ActionExecutionStatus.CONFIRMED) {
+            throw new IllegalStateException(
+                    "Action execution cannot be started from status: " + status
+            );
+        }
+
+        this.status = ActionExecutionStatus.EXECUTING;
+        this.startedAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void complete(String resultData) {
+        if (status != ActionExecutionStatus.EXECUTING) {
+            throw new IllegalStateException(
+                    "Action execution cannot be completed from status: " + status
+            );
+        }
+
+        this.status = ActionExecutionStatus.COMPLETED;
+        this.resultData = resultData;
+        this.completedAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void fail(String errorMessage) {
+        if (status != ActionExecutionStatus.EXECUTING) {
+            throw new IllegalStateException(
+                    "Action execution cannot be failed from status: " + status
+            );
+        }
+
+        this.status = ActionExecutionStatus.FAILED;
+        this.errorMessage = errorMessage;
+        this.completedAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    public void cancel() {
+        if (status != ActionExecutionStatus.CONFIRMATION_REQUIRED
+                && status != ActionExecutionStatus.PENDING
+                && status != ActionExecutionStatus.CONFIRMED) {
+            throw new IllegalStateException(
+                    "Action execution cannot be cancelled from status: " + status
+            );
+        }
+
+        this.status = ActionExecutionStatus.CANCELLED;
+        this.updatedAt = Instant.now();
+    }
 }

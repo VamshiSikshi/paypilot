@@ -45,13 +45,11 @@ public class AIToolServiceImpl implements AIToolService {
                         new ResourceNotFoundException("AI conversation not found"));
 
         var message = messageRepository
-                .findByMerchantIdAndConversationIdOrderByCreatedAtAsc(
+                .findByMerchantIdAndConversationIdAndId(
                         merchantId,
-                        conversationId
+                        conversationId,
+                        messageId
                 )
-                .stream()
-                .filter(existingMessage -> existingMessage.getId().equals(messageId))
-                .findFirst()
                 .orElseThrow(() ->
                         new ResourceNotFoundException("AI message not found"));
 
