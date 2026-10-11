@@ -6,6 +6,8 @@ import com.paypilot.backend.domain.merchant.Merchant;
 import com.paypilot.backend.domain.user.User;
 import jakarta.persistence.*;
 
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.Instant;
 
 @Entity
@@ -62,9 +64,11 @@ public class ActionExecution {
     @Column(name = "completed_at")
     private Instant completedAt;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "request_data")
     private String requestData;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "result_data")
     private String resultData;
 
@@ -77,7 +81,7 @@ public class ActionExecution {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @Column(name = "idempotency_key", unique = true, length = 255)
+    @Column(name = "idempotency_key", unique = true, length = 100)
     private String idempotencyKey;
 
     protected ActionExecution() {
