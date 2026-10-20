@@ -19,4 +19,15 @@ public class GlobalExceptionHandler {
                 exception.getMessage()
         );
     }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponse handleResourceNotFound(
+            ResourceNotFoundException exception
+    ) {
+        return new ErrorResponse(
+                "RESOURCE_NOT_FOUND",
+                exception.getMessage()
+        );
+    }
 }
