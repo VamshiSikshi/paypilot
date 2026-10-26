@@ -27,3 +27,23 @@ paypilot:
 
   google:
     client-id: test-google-client-id
+
+  security:
+    jwt:
+      secret: ${PAYPILOT_JWT_SECRET}
+      expiration: ${PAYPILOT_JWT_EXPIRATION:86400000}
+      issuer: ${PAYPILOT_JWT_ISSUER:paypilot}
+
+  razorpay:
+    token-encryption:
+      key-base64: ${RAZORPAY_TOKEN_ENCRYPTION_KEY_BASE64:}
+      key-version: ${RAZORPAY_TOKEN_ENCRYPTION_KEY_VERSION:v1}
+
+    oauth:
+      client-id: ${RAZORPAY_OAUTH_CLIENT_ID:}
+      client-secret: ${RAZORPAY_OAUTH_CLIENT_SECRET:}
+      redirect-uri: ${RAZORPAY_OAUTH_REDIRECT_URI:}
+      scope: ${RAZORPAY_OAUTH_SCOPE:}
+      authorization-uri: ${RAZORPAY_OAUTH_AUTHORIZATION_URI:https://auth.razorpay.com/authorize}
+      token-uri: ${RAZORPAY_OAUTH_TOKEN_URI:https://auth.razorpay.com/token}
+      mode: ${RAZORPAY_OAUTH_MODE:test}

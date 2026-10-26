@@ -19,3 +19,8 @@ paypilot:
       secret: test-secret-key-for-paypilot-jwt-testing-only-256-bits
       expiration: 86400000
       issuer: paypilot
+
+  razorpay:
+    token-encryption:
+      key-base64: MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=
+      key-version: ${RAZORPAY_TOKEN_ENCRYPTION_KEY_VERSION:v1}

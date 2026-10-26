@@ -12,6 +12,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import com.paypilot.backend.domain.merchant.MerchantRepository;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -20,6 +21,9 @@ class RazorpayConnectionServiceTest {
     @Mock
     private RazorpayConnectionRepository connectionRepository;
 
+    @Mock
+    private MerchantRepository merchantRepository;
+
     private RazorpayConnectionService connectionService;
 
     private Merchant merchant;
@@ -27,8 +31,10 @@ class RazorpayConnectionServiceTest {
 
     @BeforeEach
     void setUp() {
-        connectionService =
-                new RazorpayConnectionServiceImpl(connectionRepository);
+        connectionService = new RazorpayConnectionServiceImpl(
+                connectionRepository,
+                merchantRepository
+        );
 
         merchant = new Merchant(
                 "acc_merchant_test",
@@ -136,5 +142,97 @@ class RazorpayConnectionServiceTest {
         );
 
         verifyNoInteractions(connectionRepository);
+    }
+
+    @Test
+    void connectAuthorizedAccount_shouldCreateAndSaveNewConnection() {
+        when(merchantRepository.findById(1L))
+                .thenReturn(Optional.of(merchant));
+        when(connectionRepository.findByMerchantId(1L))
+                .thenReturn(Optional.empty());
+        when(connectionRepository.save(any(RazorpayConnection.class)))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        Instant expiresAt = Instant.parse("2027-01-01T00:00:00Z");
+
+        RazorpayConnection result = connectionService.connectAuthorizedAccount(
+                1L,
+                "acct_external_test",
+                "razorpay-oauth-token:41",
+                "razorpay-oauth-token:41",
+                expiresAt,
+                "payments:read"
+        );
+
+        assertEquals("acct_external_test", result.getExternalAccountId());
+        assertEquals(RazorpayConnectionStatus.CONNECTED, result.getStatus());
+        assertEquals(
+                "razorpay-oauth-token:41",
+                result.getAccessTokenReference()
+        );
+        assertEquals(
+                "razorpay-oauth-token:41",
+                result.getRefreshTokenReference()
+        );
+        assertEquals(expiresAt, result.getTokenExpiresAt());
+        assertEquals("payments:read", result.getGrantedScopes());
+
+        verify(connectionRepository).save(result);
+    }
+
+    @Test
+    void connectAuthorizedAccount_shouldUpdateExistingConnection() {
+        when(merchantRepository.findById(1L))
+                .thenReturn(Optional.of(merchant));
+        when(connectionRepository.findByMerchantId(1L))
+                .thenReturn(Optional.of(connection));
+        when(connectionRepository.save(connection)).thenReturn(connection);
+
+        connection.markDisconnected();
+
+        RazorpayConnection result = connectionService.connectAuthorizedAccount(
+                1L,
+                "acct_external_test",
+                "razorpay-oauth-token:42",
+                "razorpay-oauth-token:42",
+                Instant.parse("2027-02-01T00:00:00Z"),
+                "payments:read payments:write"
+        );
+
+        assertSame(connection, result);
+        assertEquals(RazorpayConnectionStatus.CONNECTED, result.getStatus());
+        assertEquals(
+                "razorpay-oauth-token:42",
+                result.getAccessTokenReference()
+        );
+        assertEquals(
+                "payments:read payments:write",
+                result.getGrantedScopes()
+        );
+
+        verify(connectionRepository).save(connection);
+    }
+
+    @Test
+    void connectAuthorizedAccount_shouldRejectDifferentExternalAccount() {
+        when(merchantRepository.findById(1L))
+                .thenReturn(Optional.of(merchant));
+        when(connectionRepository.findByMerchantId(1L))
+                .thenReturn(Optional.of(connection));
+
+        assertThrows(
+                IllegalStateException.class,
+                () -> connectionService.connectAuthorizedAccount(
+                        1L,
+                        "different_external_account",
+                        "razorpay-oauth-token:43",
+                        "razorpay-oauth-token:43",
+                        Instant.parse("2027-03-01T00:00:00Z"),
+                        "payments:read"
+                )
+        );
+
+        verify(connectionRepository, never())
+                .save(any(RazorpayConnection.class));
     }
 }

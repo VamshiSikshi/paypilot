@@ -16,6 +16,8 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import com.paypilot.backend.domain.razorpay.RazorpayOAuthService;
+
 
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
@@ -23,6 +25,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.willReturn;
 
 @WebMvcTest(RazorpayConnectionController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -40,6 +46,9 @@ class RazorpayConnectionControllerTest {
 
     @MockitoBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @MockitoBean
+    private RazorpayOAuthService oauthService;
 
     @Test
     void shouldReturnConnectionForAuthenticatedMerchant() throws Exception {
@@ -107,5 +116,49 @@ class RazorpayConnectionControllerTest {
         );
 
         then(connectionService).shouldHaveNoInteractions();
+    }
+
+    @Test
+    @WithMockUser(roles = "OWNER")
+    void shouldCreateAuthorizationUrlForOwner() throws Exception {
+        Long merchantId = 10L;
+        String authorizationUrl =
+                "https://auth.razorpay.com/authorize?client_id=test-client&state=test-state";
+
+        given(authenticatedUserContext.getCurrentUser())
+                .willReturn(new AuthenticatedUser(
+                        5L, merchantId, UserRole.OWNER
+                ));
+
+        given(oauthService.createAuthorizationUrl(merchantId))
+                .willReturn(authorizationUrl);
+
+        mockMvc.perform(post(
+                        "/api/v1/razorpay/connection/oauth/authorize"
+                ))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authorizationUrl")
+                        .value(authorizationUrl));
+
+        then(oauthService).should()
+                .createAuthorizationUrl(merchantId);
+    }
+
+    @Test
+    @WithMockUser(roles = "VIEWER")
+    void shouldRejectAuthorizationForViewer() throws Exception {
+        given(authenticatedUserContext.getCurrentUser())
+                .willReturn(new AuthenticatedUser(
+                        5L, 10L, UserRole.VIEWER
+                ));
+
+        org.junit.jupiter.api.Assertions.assertThrows(
+                jakarta.servlet.ServletException.class,
+                () -> mockMvc.perform(post(
+                        "/api/v1/razorpay/connection/oauth/authorize"
+                ))
+        );
+
+        then(oauthService).shouldHaveNoInteractions();
     }
 }

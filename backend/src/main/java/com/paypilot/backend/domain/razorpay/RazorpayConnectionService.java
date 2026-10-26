@@ -12,4 +12,13 @@ public interface RazorpayConnectionService {
             Long merchantId,
             Instant syncedAt
     );
+
+    RazorpayConnection connectAuthorizedAccount(
+            Long merchantId,
+            String externalAccountId,
+            String accessTokenReference,
+            String refreshTokenReference,
+            Instant tokenExpiresAt,
+            String grantedScopes
+    );
 }
