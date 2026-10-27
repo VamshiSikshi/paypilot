@@ -94,6 +94,7 @@ public class UserController {
         return userService.updateStatus(
                 user.merchantId(),
                 userId,
+                user.userId(),
                 request
         );
     }

@@ -44,6 +44,7 @@ public class MerchantController {
 
         return merchantService.updateStatus(
                 user.merchantId(),
+                user.userId(),
                 request.status()
         );
     }

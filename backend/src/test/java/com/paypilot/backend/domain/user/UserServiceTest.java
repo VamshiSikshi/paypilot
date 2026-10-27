@@ -13,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.paypilot.backend.domain.audit.AuditLogService;
 
 import java.util.Optional;
 
@@ -28,13 +29,17 @@ class UserServiceTest {
     @Mock
     private MerchantRepository merchantRepository;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         userService = new UserServiceImpl(
                 userRepository,
-                merchantRepository
+                merchantRepository,
+                auditLogService
         );
     }
 
@@ -211,7 +216,7 @@ class UserServiceTest {
     }
 
     @Test
-    void updateStatus_shouldUpdateUserStatus() {
+    void updateStatus_shouldUpdateUserStatusAndCreateAuditLog() {
         Merchant merchant = new Merchant(
                 "acc_test_123",
                 "Test Business",
@@ -233,11 +238,24 @@ class UserServiceTest {
         UserResponse response = userService.updateStatus(
                 1L,
                 10L,
+                5L,
                 new UpdateUserStatusRequest(UserStatus.ACTIVE)
         );
 
         assertEquals(UserStatus.ACTIVE, response.status());
         assertEquals(UserStatus.ACTIVE, user.getStatus());
+
+        verify(auditLogService).createAuditLog(
+                eq(1L),
+                eq(5L),
+                eq("USER_STATUS_CHANGED"),
+                eq("USER"),
+                eq(10L),
+                contains("INVITED"),
+                contains("previousStatus"),
+                isNull(),
+                isNull()
+        );
 
         verify(userRepository).findByMerchantIdAndId(1L, 10L);
     }
@@ -252,10 +270,43 @@ class UserServiceTest {
                 () -> userService.updateStatus(
                         1L,
                         999L,
+                        5L,
                         new UpdateUserStatusRequest(UserStatus.ACTIVE)
                 )
         );
 
         verify(userRepository).findByMerchantIdAndId(1L, 999L);
+    }
+
+    @Test
+    void updateStatus_shouldNotCreateAuditLogWhenStatusIsUnchanged() {
+        Merchant merchant = new Merchant(
+                "acc_test_123",
+                "Test Business",
+                "IN",
+                "INR",
+                "Asia/Kolkata"
+        );
+
+        User user = new User(
+                merchant,
+                "viewer@test.com",
+                "Test Viewer",
+                UserRole.VIEWER
+        );
+
+        when(userRepository.findByMerchantIdAndId(1L, 10L))
+                .thenReturn(Optional.of(user));
+
+        UserResponse response = userService.updateStatus(
+                1L,
+                10L,
+                5L,
+                new UpdateUserStatusRequest(UserStatus.INVITED)
+        );
+
+        assertEquals(UserStatus.INVITED, response.status());
+
+        verifyNoInteractions(auditLogService);
     }
 }

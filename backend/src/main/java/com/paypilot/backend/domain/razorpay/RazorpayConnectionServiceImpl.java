@@ -5,9 +5,10 @@ import com.paypilot.backend.domain.merchant.MerchantRepository;
 import com.paypilot.backend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import com.paypilot.backend.domain.audit.AuditLogService;
 import java.time.Instant;
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -16,13 +17,16 @@ public class RazorpayConnectionServiceImpl
 
     private final RazorpayConnectionRepository connectionRepository;
     private final MerchantRepository merchantRepository;
+    private final AuditLogService auditLogService;
 
     public RazorpayConnectionServiceImpl(
             RazorpayConnectionRepository connectionRepository,
-            MerchantRepository merchantRepository
+            MerchantRepository merchantRepository,
+            AuditLogService auditLogService
     ) {
-        this.connectionRepository = connectionRepository;
-        this.merchantRepository = merchantRepository;
+        this.connectionRepository = Objects.requireNonNull(connectionRepository);
+        this.merchantRepository = Objects.requireNonNull(merchantRepository);
+        this.auditLogService = Objects.requireNonNull(auditLogService);
     }
 
     @Override
@@ -32,9 +36,27 @@ public class RazorpayConnectionServiceImpl
 
     @Override
     @Transactional
-    public RazorpayConnection disconnect(Long merchantId) {
+    public RazorpayConnection disconnect(Long merchantId, Long actorUserId) {
         RazorpayConnection connection = findConnection(merchantId);
+        RazorpayConnectionStatus previousStatus = connection.getStatus();
+
         connection.markDisconnected();
+
+        if (previousStatus != RazorpayConnectionStatus.DISCONNECTED) {
+            auditLogService.createAuditLog(
+                    merchantId,
+                    actorUserId,
+                    "RAZORPAY_DISCONNECTED",
+                    "RAZORPAY_CONNECTION",
+                    connection.getId(),
+                    "Razorpay connection disconnected",
+                    "{\"previousStatus\":\"" + previousStatus
+                            + "\",\"newStatus\":\"DISCONNECTED\"}",
+                    null,
+                    null
+            );
+        }
+
         return connection;
     }
 
@@ -50,6 +72,7 @@ public class RazorpayConnectionServiceImpl
         connection.recordSuccessfulSync(syncedAt);
         return connection;
     }
+
 
     @Override
     @Transactional
@@ -80,11 +103,18 @@ public class RazorpayConnectionServiceImpl
                         "Merchant not found: " + merchantId
                 ));
 
-        RazorpayConnection connection = connectionRepository
-                .findByMerchantId(merchantId)
-                .orElseGet(() -> new RazorpayConnection(
-                        merchant, externalAccountId
-                ));
+        Optional<RazorpayConnection> existingConnection =
+                connectionRepository.findByMerchantId(merchantId);
+
+        boolean connectionExists = existingConnection.isPresent();
+
+        RazorpayConnection connection = existingConnection.orElseGet(
+                () -> new RazorpayConnection(merchant, externalAccountId)
+        );
+
+        RazorpayConnectionStatus previousStatus = connectionExists
+                ? connection.getStatus()
+                : null;
 
         if (!externalAccountId.equals(connection.getExternalAccountId())) {
             throw new IllegalStateException(
@@ -100,7 +130,31 @@ public class RazorpayConnectionServiceImpl
                 grantedScopes
         );
 
-        return connectionRepository.save(connection);
+        RazorpayConnection savedConnection = connectionRepository.save(connection);
+
+        String eventType = connectionExists
+                ? "RAZORPAY_CONNECTION_UPDATED"
+                : "RAZORPAY_CONNECTED";
+
+        String description = connectionExists
+                ? "Razorpay connection updated"
+                : "Razorpay account connected";
+
+        auditLogService.createAuditLog(
+                merchantId,
+                null,
+                eventType,
+                "RAZORPAY_CONNECTION",
+                savedConnection.getId(),
+                description,
+                connectionExists
+                        ? "{\"previousStatus\":\"" + previousStatus
+                        + "\",\"newStatus\":\"CONNECTED\"}"
+                        : "{\"previousStatus\":null,\"newStatus\":\"CONNECTED\"}",
+                null,
+                null
+        );
+        return savedConnection;
     }
 
     private RazorpayConnection findConnection(Long merchantId) {

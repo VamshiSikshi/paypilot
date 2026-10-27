@@ -233,6 +233,7 @@ class UserSecurityTest {
         then(userService).should().updateStatus(
                 org.mockito.ArgumentMatchers.eq(10L),
                 org.mockito.ArgumentMatchers.eq(20L),
+                org.mockito.ArgumentMatchers.eq(5L),
                 org.mockito.ArgumentMatchers.any(
                         com.paypilot.backend.domain.user.dto.UpdateUserStatusRequest.class)
         );

@@ -11,6 +11,9 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
+import com.paypilot.backend.domain.audit.AuditLogRepository;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.mockito.Mockito;
 
 import java.util.List;
 
@@ -282,5 +285,154 @@ class AuditLogServiceTest {
         )
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Merchant not found");
+    }
+
+    @Test
+    void shouldRedactSensitiveFieldsFromAuditMetadata() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "razorpay_redact",
+                        "Redaction Merchant",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        String metadata = """
+            {
+              "amount": 500,
+              "currency": "INR",
+              "password": "secret-password",
+              "accessToken": "access-123",
+              "clientSecret": "client-secret-456"
+            }
+            """;
+
+        AuditLogResponse response = auditLogService.createAuditLog(
+                merchant.getId(),
+                null,
+                "PAYMENT_CREATED",
+                "PAYMENT",
+                200L,
+                "Payment created",
+                metadata,
+                null,
+                null
+        );
+
+        assertThat(response.metadata())
+                .contains("\"amount\":500")
+                .contains("\"currency\":\"INR\"")
+                .contains("\"password\":\"[REDACTED]\"")
+                .contains("\"accessToken\":\"[REDACTED]\"")
+                .contains("\"clientSecret\":\"[REDACTED]\"")
+                .doesNotContain("secret-password")
+                .doesNotContain("access-123")
+                .doesNotContain("client-secret-456");
+    }
+
+    @Test
+    void shouldRedactSensitiveFieldsRecursivelyInNestedMetadata() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "razorpay_nested",
+                        "Nested Metadata Merchant",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        String metadata = """
+            {
+              "payment": {
+                "amount": 500,
+                "credentials": {
+                  "apiKey": "api-key-value"
+                }
+              },
+              "items": [
+                {
+                  "refreshToken": "refresh-token-value"
+                }
+              ]
+            }
+            """;
+
+        AuditLogResponse response = auditLogService.createAuditLog(
+                merchant.getId(),
+                null,
+                "PAYMENT_CREATED",
+                "PAYMENT",
+                201L,
+                "Payment created",
+                metadata,
+                null,
+                null
+        );
+
+        assertThat(response.metadata())
+                .contains("\"amount\":500")
+                .contains("\"apiKey\":\"[REDACTED]\"")
+                .contains("\"refreshToken\":\"[REDACTED]\"")
+                .doesNotContain("api-key-value")
+                .doesNotContain("refresh-token-value");
+    }
+
+    @Test
+    void shouldRejectInvalidJsonAuditMetadata() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "razorpay_invalid_json",
+                        "Invalid JSON Merchant",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        assertThatThrownBy(() ->
+                auditLogService.createAuditLog(
+                        merchant.getId(),
+                        null,
+                        "PAYMENT_CREATED",
+                        "PAYMENT",
+                        202L,
+                        "Payment created",
+                        "{invalid-json",
+                        null,
+                        null
+                )
+        )
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Audit metadata must be valid JSON");
+    }
+
+    @Test
+    void shouldPreserveNullAuditMetadata() {
+        Merchant merchant = merchantRepository.save(
+                new Merchant(
+                        "razorpay_null_metadata",
+                        "Null Metadata Merchant",
+                        "IN",
+                        "INR",
+                        "Asia/Kolkata"
+                )
+        );
+
+        AuditLogResponse response = auditLogService.createAuditLog(
+                merchant.getId(),
+                null,
+                "PAYMENT_SYNCED",
+                "PAYMENT",
+                203L,
+                "Payment synchronized",
+                null,
+                null,
+                null
+        );
+
+        assertThat(response.metadata()).isNull();
     }
 }

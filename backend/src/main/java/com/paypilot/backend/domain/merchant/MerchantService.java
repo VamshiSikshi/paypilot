@@ -6,5 +6,9 @@ public interface MerchantService {
 
     MerchantResponse getMerchant(Long merchantId);
 
-    MerchantResponse updateStatus(Long merchantId, MerchantStatus status);
+    MerchantResponse updateStatus(
+            Long merchantId,
+            Long actorUserId,
+            MerchantStatus status
+    );
 }

@@ -64,7 +64,7 @@ public class RazorpayConnectionController {
         AuthenticatedUser user =
                 authenticatedUserContext.getCurrentUser();
 
-        connectionService.disconnect(user.merchantId());
+        connectionService.disconnect(user.merchantId(), user.userId());
 
         return ResponseEntity.noContent().build();
     }

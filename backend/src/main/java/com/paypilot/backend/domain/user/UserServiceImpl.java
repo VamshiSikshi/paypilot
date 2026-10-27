@@ -1,5 +1,8 @@
 package com.paypilot.backend.domain.user;
 
+import com.paypilot.backend.domain.audit.AuditLogService;
+import com.paypilot.backend.domain.merchant.Merchant;
+import com.paypilot.backend.domain.merchant.MerchantRepository;
 import com.paypilot.backend.domain.user.dto.CreateUserRequest;
 import com.paypilot.backend.domain.user.dto.UpdateUserRequest;
 import com.paypilot.backend.domain.user.dto.UpdateUserRoleRequest;
@@ -8,8 +11,6 @@ import com.paypilot.backend.domain.user.dto.UserResponse;
 import com.paypilot.backend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.paypilot.backend.domain.merchant.Merchant;
-import com.paypilot.backend.domain.merchant.MerchantRepository;
 
 @Service
 @Transactional(readOnly = true)
@@ -17,13 +18,16 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final MerchantRepository merchantRepository;
+    private final AuditLogService auditLogService;
 
     public UserServiceImpl(
             UserRepository userRepository,
-            MerchantRepository merchantRepository
+            MerchantRepository merchantRepository,
+            AuditLogService auditLogService
     ) {
         this.userRepository = userRepository;
         this.merchantRepository = merchantRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -89,11 +93,37 @@ public class UserServiceImpl implements UserService {
     public UserResponse updateStatus(
             Long merchantId,
             Long userId,
+            Long actorUserId,
             UpdateUserStatusRequest request
     ) {
         User user = findUser(merchantId, userId);
 
-        user.updateStatus(request.status());
+        UserStatus previousStatus = user.getStatus();
+        UserStatus newStatus = request.status();
+
+        if (previousStatus != newStatus) {
+            user.updateStatus(newStatus);
+
+            String metadata = """
+                    {
+                      "previousStatus": "%s",
+                      "newStatus": "%s"
+                    }
+                    """.formatted(previousStatus, newStatus);
+
+            auditLogService.createAuditLog(
+                    merchantId,
+                    actorUserId,
+                    "USER_STATUS_CHANGED",
+                    "USER",
+                    userId,
+                    "User status changed from "
+                            + previousStatus + " to " + newStatus,
+                    metadata,
+                    null,
+                    null
+            );
+        }
 
         return UserResponse.from(user);
     }

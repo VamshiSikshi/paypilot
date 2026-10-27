@@ -30,6 +30,7 @@ public interface UserService {
     UserResponse updateStatus(
             Long merchantId,
             Long userId,
+            Long actorUserId,
             UpdateUserStatusRequest request
     );
 }

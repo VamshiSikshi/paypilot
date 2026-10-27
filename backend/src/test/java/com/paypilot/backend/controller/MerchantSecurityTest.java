@@ -127,6 +127,7 @@ class MerchantSecurityTest {
 
         then(merchantService).should().updateStatus(
                 10L,
+                5L,
                 MerchantStatus.SUSPENDED
         );
     }

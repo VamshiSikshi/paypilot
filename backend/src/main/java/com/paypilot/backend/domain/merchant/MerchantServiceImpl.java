@@ -1,5 +1,6 @@
 package com.paypilot.backend.domain.merchant;
 
+import com.paypilot.backend.domain.audit.AuditLogService;
 import com.paypilot.backend.domain.merchant.dto.MerchantResponse;
 import com.paypilot.backend.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -10,9 +11,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class MerchantServiceImpl implements MerchantService {
 
     private final MerchantRepository merchantRepository;
+    private final AuditLogService auditLogService;
 
-    public MerchantServiceImpl(MerchantRepository merchantRepository) {
+    public MerchantServiceImpl(
+            MerchantRepository merchantRepository,
+            AuditLogService auditLogService
+    ) {
         this.merchantRepository = merchantRepository;
+        this.auditLogService = auditLogService;
     }
 
     @Override
@@ -29,6 +35,7 @@ public class MerchantServiceImpl implements MerchantService {
     @Transactional
     public MerchantResponse updateStatus(
             Long merchantId,
+            Long actorUserId,
             MerchantStatus status
     ) {
         Merchant merchant = merchantRepository.findById(merchantId)
@@ -36,7 +43,31 @@ public class MerchantServiceImpl implements MerchantService {
                         "Merchant not found: " + merchantId
                 ));
 
-        merchant.updateStatus(status);
+        MerchantStatus previousStatus = merchant.getStatus();
+
+        if (previousStatus != status) {
+            merchant.updateStatus(status);
+
+            String metadata = """
+                    {
+                      "previousStatus": "%s",
+                      "newStatus": "%s"
+                    }
+                    """.formatted(previousStatus, status);
+
+            auditLogService.createAuditLog(
+                    merchantId,
+                    actorUserId,
+                    "MERCHANT_STATUS_CHANGED",
+                    "MERCHANT",
+                    merchantId,
+                    "Merchant status changed from "
+                            + previousStatus + " to " + status,
+                    metadata,
+                    null,
+                    null
+            );
+        }
 
         return MerchantResponse.from(merchant);
     }

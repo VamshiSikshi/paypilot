@@ -6,7 +6,7 @@ public interface RazorpayConnectionService {
 
     RazorpayConnection getConnection(Long merchantId);
 
-    RazorpayConnection disconnect(Long merchantId);
+    RazorpayConnection disconnect(Long merchantId, Long actorUserId);
 
     RazorpayConnection recordSuccessfulSync(
             Long merchantId,

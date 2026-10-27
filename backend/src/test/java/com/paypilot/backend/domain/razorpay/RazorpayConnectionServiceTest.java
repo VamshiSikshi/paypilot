@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import com.paypilot.backend.domain.audit.AuditLogService;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -24,6 +25,9 @@ class RazorpayConnectionServiceTest {
     @Mock
     private MerchantRepository merchantRepository;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     private RazorpayConnectionService connectionService;
 
     private Merchant merchant;
@@ -33,7 +37,8 @@ class RazorpayConnectionServiceTest {
     void setUp() {
         connectionService = new RazorpayConnectionServiceImpl(
                 connectionRepository,
-                merchantRepository
+                merchantRepository,
+                auditLogService
         );
 
         merchant = new Merchant(
@@ -78,20 +83,32 @@ class RazorpayConnectionServiceTest {
         );
     }
 
+
     @Test
-    void disconnect_shouldMarkConnectionDisconnected() {
+    void disconnect_shouldMarkConnectionDisconnectedAndCreateAuditLog() {
         when(connectionRepository.findByMerchantId(1L))
                 .thenReturn(Optional.of(connection));
 
         RazorpayConnection result =
-                connectionService.disconnect(1L);
+                connectionService.disconnect(1L, 5L);
 
         assertSame(connection, result);
         assertEquals(
                 RazorpayConnectionStatus.DISCONNECTED,
                 result.getStatus()
         );
-        verify(connectionRepository).findByMerchantId(1L);
+
+        verify(auditLogService).createAuditLog(
+                eq(1L),
+                eq(5L),
+                eq("RAZORPAY_DISCONNECTED"),
+                eq("RAZORPAY_CONNECTION"),
+                any(),
+                eq("Razorpay connection disconnected"),
+                contains("\"previousStatus\":\"CONNECTED\""),
+                isNull(),
+                isNull()
+        );
     }
 
     @Test
@@ -101,7 +118,7 @@ class RazorpayConnectionServiceTest {
 
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> connectionService.disconnect(999L)
+                () -> connectionService.disconnect(999L, 5L)
         );
     }
 
@@ -178,6 +195,18 @@ class RazorpayConnectionServiceTest {
         assertEquals("payments:read", result.getGrantedScopes());
 
         verify(connectionRepository).save(result);
+
+        verify(auditLogService).createAuditLog(
+                eq(1L),
+                isNull(),
+                eq("RAZORPAY_CONNECTED"),
+                eq("RAZORPAY_CONNECTION"),
+                any(),
+                eq("Razorpay account connected"),
+                contains("\"newStatus\":\"CONNECTED\""),
+                isNull(),
+                isNull()
+        );
     }
 
     @Test
@@ -211,6 +240,19 @@ class RazorpayConnectionServiceTest {
         );
 
         verify(connectionRepository).save(connection);
+
+        verify(auditLogService).createAuditLog(
+                eq(1L),
+                isNull(),
+                eq("RAZORPAY_CONNECTION_UPDATED"),
+                eq("RAZORPAY_CONNECTION"),
+                any(),
+                eq("Razorpay connection updated"),
+                contains("\"newStatus\":\"CONNECTED\""),
+                isNull(),
+                isNull()
+        );
+
     }
 
     @Test
@@ -234,5 +276,19 @@ class RazorpayConnectionServiceTest {
 
         verify(connectionRepository, never())
                 .save(any(RazorpayConnection.class));
+    }
+
+    @Test
+    void disconnect_shouldNotCreateDuplicateAuditLogWhenAlreadyDisconnected() {
+        connection.markDisconnected();
+
+        when(connectionRepository.findByMerchantId(1L))
+                .thenReturn(Optional.of(connection));
+
+        connectionService.disconnect(1L, 5L);
+
+        verify(auditLogService, never()).createAuditLog(
+                any(), any(), any(), any(), any(), any(), any(), any(), any()
+        );
     }
 }

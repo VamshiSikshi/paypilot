@@ -17,8 +17,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import com.paypilot.backend.domain.razorpay.RazorpayOAuthService;
-
-
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -97,7 +95,7 @@ class RazorpayConnectionControllerTest {
         mockMvc.perform(delete("/api/v1/razorpay/connection"))
                 .andExpect(status().isNoContent());
 
-        then(connectionService).should().disconnect(merchantId);
+        then(connectionService).should().disconnect(merchantId, 5L);
     }
 
     @Test
